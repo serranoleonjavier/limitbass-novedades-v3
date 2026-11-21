@@ -1,0 +1,42 @@
+
+name: Sincronizar novedades Shopify
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: novedades-v3
+  cancel-in-progress: false
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Sincronizar en modo simulación
+        env:
+          SHOPIFY_SHOP: ${{ secrets.SHOPIFY_SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          SHOPIFY_ONLINE_STORE_PUBLICATION_ID: ${{ secrets.SHOPIFY_ONLINE_STORE_PUBLICATION_ID }}
+          SHOPIFY_COLLECTION_ID: ${{ vars.SHOPIFY_COLLECTION_ID }}
+          NEW_PRODUCT_DAYS: '30'
+          DRY_RUN: 'true'
+        run: python shopify_sync.py
