@@ -87,7 +87,11 @@ def main():
     add = [pid for pid in desired if pid not in current]
     remove = [pid for pid in current if pid not in desired]
     print(f"Ranking: {len(desired)} productos; añadir: {len(add)}; retirar: {len(remove)}; simulación: {DRY_RUN}")
-    if DRY_RUN or current == desired:
+    if DRY_RUN:
+        print(f"::notice::Simulación verificada: {len(desired)} productos elegibles, {len(add)} altas y {len(remove)} bajas previstas.")
+        return
+    if current == desired:
+        print("La colección ya coincide con el ranking.")
         return
     change_members(api, "collectionAddProducts", add)
     change_members(api, "collectionRemoveProducts", remove)
