@@ -3,6 +3,11 @@ name: Sincronizar novedades Shopify
 
 on:
   workflow_dispatch:
+    inputs:
+      aplicar:
+        description: Aplicar cambios en Novedades V3 Test
+        type: boolean
+        default: false
   schedule:
     - cron: '*/30 * * * *'
 
@@ -30,7 +35,7 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      - name: Sincronizar en modo simulación
+      - name: Sincronizar Novedades
         env:
           SHOPIFY_SHOP: ${{ secrets.SHOPIFY_SHOP }}
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
@@ -38,5 +43,10 @@ jobs:
           SHOPIFY_ONLINE_STORE_PUBLICATION_ID: ${{ secrets.SHOPIFY_ONLINE_STORE_PUBLICATION_ID }}
           SHOPIFY_COLLECTION_ID: ${{ vars.SHOPIFY_COLLECTION_ID }}
           NEW_PRODUCT_DAYS: '30'
-          DRY_RUN: 'true'
-        run: python shopify_sync.py
+          DRY_RUN: ${{ inputs.aplicar && 'false' || 'true' }}
+        run: |
+          if [[ "$DRY_RUN" == false && "$SHOPIFY_COLLECTION_ID" != 700252651895 ]]; then
+            echo 'La escritura solo está habilitada en la colección Novedades V3 Test.' >&2
+            exit 1
+          fi
+          python shopify_sync.py
