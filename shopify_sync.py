@@ -50,9 +50,24 @@ class Shopify:
                     raise requests.HTTPError(f'HTTP {r.status_code}', response=r)
                 r.raise_for_status()
                 body = r.json()
-                if body.get('errors'):
-                    raise RuntimeError(str(body['errors']))
-                return body['data']
+                errors = body.get('errors')
+                if not errors:
+                    return body['data']
+                if attempt == 4 or not all(
+                    error.get('extensions', {}).get('code') == 'THROTTLED'
+                    for error in errors
+                ):
+                    raise RuntimeError(str(errors))
+                cost = body.get('extensions', {}).get('cost', {})
+                budget = cost.get('throttleStatus', {})
+                requested = cost.get('requestedQueryCost')
+                available = budget.get('currentlyAvailable')
+                restore_rate = budget.get('restoreRate')
+                delay = min(2 ** attempt * 2, 20)
+                if requested is not None and available is not None and restore_rate:
+                    delay = max(0, requested - available) / restore_rate + 0.25
+                print(f'Cuota de Shopify agotada. Reintento {attempt+1}/4 en {delay:.2f} s')
+                time.sleep(delay)
             except (requests.RequestException, ValueError) as exc:
                 if attempt == 4:
                     raise
