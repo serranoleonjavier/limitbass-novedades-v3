@@ -1,8 +1,6 @@
 name: Sincronizar Top ventas historico
 
 on:
-  push:
-    branches: [top-ventas-historico]
   workflow_dispatch:
     inputs:
       aplicar:
@@ -36,5 +34,5 @@ jobs:
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           SHOPIFY_ONLINE_STORE_PUBLICATION_ID: ${{ secrets.SHOPIFY_ONLINE_STORE_PUBLICATION_ID }}
           SHOPIFY_COLLECTION_ID: '700255142263'
-          DRY_RUN: ${{ ((github.event_name == 'push' && github.event.head_commit.message == 'Apply verified bestseller ranking to the test collection') || (github.event_name == 'schedule' && vars.TOP_VENTAS_APLICAR == 'true') || (github.event_name == 'workflow_dispatch' && inputs.aplicar)) && 'false' || 'true' }}
+          DRY_RUN: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.aplicar)) && 'false' || 'true' }}
         run: python shopify_top_sales.py
