@@ -1,0 +1,38 @@
+name: Sincronizar Top ventas historico
+
+on:
+  workflow_dispatch:
+    inputs:
+      aplicar:
+        description: Aplicar cambios solo a la colección de prueba
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: top-ventas-historico
+  cancel-in-progress: false
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Calcular y verificar el ranking
+        env:
+          SHOPIFY_SHOP: ${{ secrets.SHOPIFY_SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          SHOPIFY_ONLINE_STORE_PUBLICATION_ID: ${{ secrets.SHOPIFY_ONLINE_STORE_PUBLICATION_ID }}
+          SHOPIFY_COLLECTION_ID: '700255142263'
+          DRY_RUN: ${{ ((github.event_name == 'schedule' && vars.TOP_VENTAS_APLICAR == 'true') || (github.event_name == 'workflow_dispatch' && inputs.aplicar)) && 'false' || 'true' }}
+        run: python shopify_top_sales.py
