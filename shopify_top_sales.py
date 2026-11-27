@@ -63,8 +63,22 @@ def main():
     if COLLECTION_ID != TARGET:
         raise RuntimeError("El destino debe ser la colección de prueba Top ventas histórico.")
     api = Shopify(get_token())
-    _, current = get_collection(api)
-    desired = ranked_products(api)
+    try:
+        desired = ranked_products(api)
+    except Exception as error:
+        detail = str(error).lower()
+        reason = "Shopify rechazó la consulta de ventas o su respuesta no se pudo procesar."
+        if "access denied" in detail or "read_reports" in detail or "protected customer" in detail:
+            reason = "Shopify denegó acceso al histórico de ventas. Revisar read_reports y acceso a datos protegidos de la aplicación de GitHub."
+        elif "solo hay" in detail:
+            reason = "Shopify devolvió menos de 24 productos elegibles."
+        print(f"::error::{reason}")
+        raise
+    try:
+        _, current = get_collection(api)
+    except Exception:
+        print("::error::No se pudo leer la colección de prueba o su orden manual.")
+        raise
     add = [pid for pid in desired if pid not in current]
     remove = [pid for pid in current if pid not in desired]
     print(f"Ranking: {len(desired)} productos; añadir: {len(add)}; retirar: {len(remove)}; simulación: {DRY_RUN}")
