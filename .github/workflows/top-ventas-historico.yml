@@ -1,6 +1,8 @@
 name: Sincronizar Top ventas historico
 
 on:
+  push:
+    branches: [top-ventas-historico]
   workflow_dispatch:
     inputs:
       aplicar:
