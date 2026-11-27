@@ -43,7 +43,7 @@ jobs:
           SHOPIFY_ONLINE_STORE_PUBLICATION_ID: ${{ secrets.SHOPIFY_ONLINE_STORE_PUBLICATION_ID }}
           SHOPIFY_COLLECTION_ID: ${{ vars.SHOPIFY_COLLECTION_ID }}
           NEW_PRODUCT_DAYS: '30'
-          DRY_RUN: ${{ inputs.aplicar && 'false' || 'true' }}
+          DRY_RUN: ${{ (github.event_name == 'schedule' || inputs.aplicar) && 'false' || 'true' }}
         run: |
           if [[ "$DRY_RUN" == false && "$SHOPIFY_COLLECTION_ID" != 700252651895 ]]; then
             echo 'La escritura solo está habilitada en la colección Novedades V3 Test.' >&2
