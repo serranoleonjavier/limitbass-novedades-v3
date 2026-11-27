@@ -64,12 +64,17 @@ def main():
         raise RuntimeError("El destino debe ser la colección de prueba Top ventas histórico.")
     api = Shopify(get_token())
     try:
+        app = api.gql("{ currentAppInstallation { accessScopes { handle } } }")["currentAppInstallation"]
+        if not any(scope["handle"] == "read_reports" for scope in app["accessScopes"]):
+            raise RuntimeError("MISSING_READ_REPORTS")
         desired = ranked_products(api)
     except Exception as error:
         detail = str(error).lower()
         reason = "Shopify rechazó la consulta de ventas o su respuesta no se pudo procesar."
-        if "access denied" in detail or "read_reports" in detail or "protected customer" in detail:
-            reason = "Shopify denegó acceso al histórico de ventas. Revisar read_reports y acceso a datos protegidos de la aplicación de GitHub."
+        if "missing_read_reports" in detail:
+            reason = "La aplicación que usa GitHub Actions no tiene el permiso read_reports."
+        elif "access denied" in detail or "read_reports" in detail or "protected customer" in detail:
+            reason = "La aplicación tiene read_reports, pero Shopify denegó la consulta de ventas. Revisar el acceso a datos protegidos."
         elif "solo hay" in detail:
             reason = "Shopify devolvió menos de 24 productos elegibles."
         print(f"::error::{reason}")
